@@ -9,6 +9,7 @@
     "db:generate": "turbo db:generate",
     "db:push": "turbo db:push",
     "db:migrate": "pnpm --filter @lms/database db:migrate",
+    "db:studio": "pnpm --filter @lms/database db:studio",
     "clean": "turbo clean"
   },
   "devDependencies": {
