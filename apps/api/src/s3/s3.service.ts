@@ -1,6 +1,12 @@
 import { Injectable, OnModuleInit } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { S3Client, CreateMultipartUploadCommand } from '@aws-sdk/client-s3';
+import {
+  S3Client,
+  CreateMultipartUploadCommand,
+  UploadPartCommand,
+  CompleteMultipartUploadCommand,
+} from '@aws-sdk/client-s3';
+import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 
 @Injectable()
 export class S3Service implements OnModuleInit {
@@ -43,5 +49,33 @@ export class S3Service implements OnModuleInit {
       throw new Error('Failed to obtain UploadId from S3');
     }
     return response.UploadId;
+  }
+
+  async getPresignedPartUrl(key: string, uploadId: string, partNumber: number): Promise<string> {
+    const command = new UploadPartCommand({
+      Bucket: this.rawBucket,
+      Key: key,
+      UploadId: uploadId,
+      PartNumber: partNumber,
+    });
+
+    return getSignedUrl(this.s3Client, command, { expiresIn: 300 });
+  }
+
+  async completeMultipartUpload(
+    key: string,
+    uploadId: string,
+    parts: Array<{ PartNumber: number; ETag: string }>,
+  ): Promise<void> {
+    const command = new CompleteMultipartUploadCommand({
+      Bucket: this.rawBucket,
+      Key: key,
+      UploadId: uploadId,
+      MultipartUpload: {
+        Parts: parts.sort((a, b) => a.PartNumber - b.PartNumber),
+      },
+    });
+
+    await this.s3Client.send(command);
   }
 }
