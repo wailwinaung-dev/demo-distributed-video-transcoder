@@ -1,0 +1,31 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum VideoStatus {
+  PENDING
+  UPLOADED
+  PROCESSING
+  READY
+  FAILED
+}
+
+model Video {
+  id           String      @id @default(uuid())
+  title        String
+  rawS3Key     String
+  hlsMasterKey String?
+  vttKey       String?
+  status       VideoStatus @default(PENDING)
+  progress     Int         @default(0)
+  errorMessage String?
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+
+  @@map("videos")
+}

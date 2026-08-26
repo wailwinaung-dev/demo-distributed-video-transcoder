@@ -1,0 +1,8 @@
+packages:
+  - 'apps/*' # All runnable apps (Next.js, NestJS, Go)
+  - 'packages/*' # All shared internal packages (Prisma DB, Types)
+allowBuilds:
+  '@prisma/client': true
+  '@prisma/engines': true
+  prisma: true
+  unrs-resolver: true

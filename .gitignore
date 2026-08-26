@@ -1,0 +1,24 @@
+# Dependencies
+node_modules/
+.pnpm-store/
+
+# Next.js & Build outputs
+.next/
+dist/
+out/
+.turbo/
+
+# Environment files
+.env
+.env.local
+.env*.local
+
+# OS & IDE files
+.DS_Store
+.vscode/
+.idea/
+
+# MinIO & Postgres Data
+minio_data/
+postgres_data/
+redis_data/
