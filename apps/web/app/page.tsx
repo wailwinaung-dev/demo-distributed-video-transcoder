@@ -1,69 +1,65 @@
-import Image from "next/image";
+import Link from 'next/link';
+import { UploadCloud, Cpu, Layers, Sparkles } from 'lucide-react';
 
-export default function Home() {
+export default function HomePage() {
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert h-5 w-[100px]"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the{" "}
-            <code className="rounded bg-black/[.06] px-1.5 py-0.5 font-mono text-[0.9em] dark:bg-white/[.08]">
-              page.tsx
-            </code>{" "}
-            file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
+    <main className="mx-auto max-w-6xl px-4 py-16 sm:px-6">
+      {/* Hero Section */}
+      <div className="text-center">
+        <div className="inline-flex items-center gap-2 rounded-full border border-indigo-500/20 bg-indigo-500/10 px-4 py-1.5 text-xs font-medium text-indigo-600 dark:text-indigo-400">
+          <Sparkles className="h-3.5 w-3.5" />
+          <span>Next.js 16 + NestJS + Go FFmpeg + MinIO S3</span>
+        </div>
+        <h1 className="mt-6 text-4xl font-extrabold tracking-tight text-zinc-900 dark:text-zinc-50 sm:text-5xl">
+          High Performance Video Transcoding Pipeline
+        </h1>
+        <p className="mx-auto mt-4 max-w-2xl text-base text-zinc-600 dark:text-zinc-400">
+          Direct-to-S3 chunked multipart uploads, asynchronous Go transcode worker with adaptive HLS multi-bitrate ladder (1080p, 720p, 360p), and storyboard scrubbing previews.
+        </p>
+
+        <div className="mt-8 flex items-center justify-center gap-4">
+          <Link
+            href="/upload"
+            className="flex items-center gap-2 rounded-xl bg-indigo-600 px-6 py-3 text-sm font-semibold text-white shadow-md shadow-indigo-500/20 transition-all hover:bg-indigo-500 active:scale-[0.98]"
+          >
+            <UploadCloud className="h-4 w-4" />
+            Upload Video
+          </Link>
+        </div>
+      </div>
+
+      {/* Feature Cards */}
+      <div className="mt-16 grid grid-cols-1 gap-6 sm:grid-cols-3">
+        <div className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-xs dark:border-zinc-800 dark:bg-zinc-900/60">
+          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-indigo-50 text-indigo-600 dark:bg-indigo-950/60 dark:text-indigo-400">
+            <UploadCloud className="h-5 w-5" />
+          </div>
+          <h3 className="mt-4 font-semibold text-zinc-900 dark:text-zinc-100">Direct S3 Multipart</h3>
+          <p className="mt-1.5 text-sm text-zinc-600 dark:text-zinc-400">
+            10MB chunked browser uploads straight to MinIO S3 without server buffering.
           </p>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert h-[14px] w-4"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={14}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+
+        <div className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-xs dark:border-zinc-800 dark:bg-zinc-900/60">
+          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-indigo-50 text-indigo-600 dark:bg-indigo-950/60 dark:text-indigo-400">
+            <Cpu className="h-5 w-5" />
+          </div>
+          <h3 className="mt-4 font-semibold text-zinc-900 dark:text-zinc-100">Go FFmpeg Worker</h3>
+          <p className="mt-1.5 text-sm text-zinc-600 dark:text-zinc-400">
+            High performance transcoding generating 360p, 720p, 1080p HLS playlists.
+          </p>
         </div>
-      </main>
-    </div>
+
+        <div className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-xs dark:border-zinc-800 dark:bg-zinc-900/60">
+          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-indigo-50 text-indigo-600 dark:bg-indigo-950/60 dark:text-indigo-400">
+            <Layers className="h-5 w-5" />
+          </div>
+          <h3 className="mt-4 font-semibold text-zinc-900 dark:text-zinc-100">Storyboard Previews</h3>
+          <p className="mt-1.5 text-sm text-zinc-600 dark:text-zinc-400">
+            Automated sprite generation and WebVTT cue extraction for timeline hover previews.
+          </p>
+        </div>
+      </div>
+    </main>
   );
 }

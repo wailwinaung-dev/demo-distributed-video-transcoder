@@ -2,23 +2,35 @@
 node_modules/
 .pnpm-store/
 
-# Next.js & Build outputs
+# Next.js, NestJS & Build outputs
 .next/
 dist/
 out/
+build/
 .turbo/
+*.tsbuildinfo
 
-# Environment files
+# Environment files (Ignored across all packages)
 .env
 .env.local
+.env.*.local
 .env*.local
+!.env.example
 
-# OS & IDE files
-.DS_Store
-.vscode/
-.idea/
+# Go / Transcoder Binaries & Temp
+apps/transcoder/tmp/
+*.exe
+*.dll
+*.so
+*.dylib
 
-# MinIO & Postgres Data
+# Docker Data Volumes
 minio_data/
 postgres_data/
 redis_data/
+
+# OS & IDE
+.DS_Store
+.vscode/
+.idea/
+*.log
