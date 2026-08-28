@@ -20,6 +20,7 @@ interface VideoPlayerProps {
   src: string;
   vttSrc?: string | null;
   title?: string;
+  watermarkText?: string;
 }
 
 interface QualityLevel {
@@ -29,11 +30,29 @@ interface QualityLevel {
   name: string;
 }
 
-export const VideoPlayer: React.FC<VideoPlayerProps> = ({ src, vttSrc, title }) => {
+export const VideoPlayer: React.FC<VideoPlayerProps> = ({
+  src,
+  vttSrc,
+  title,
+  watermarkText = 'student@lms-demo.com | ID: #84920',
+}) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const progressBarRef = useRef<HTMLDivElement>(null);
   const hlsRef = useRef<Hls | null>(null);
+
+  // Floating Watermark Position State
+  const [watermarkPos, setWatermarkPos] = useState({ top: 15, left: 15 });
+
+  // Periodically shift watermark to deter screen recording crops
+  useEffect(() => {
+    const interval = setInterval(() => {
+      const randomTop = Math.floor(Math.random() * 70) + 10; // 10% to 80%
+      const randomLeft = Math.floor(Math.random() * 60) + 10; // 10% to 70%
+      setWatermarkPos({ top: randomTop, left: randomLeft });
+    }, 12000);
+    return () => clearInterval(interval);
+  }, []);
 
   // Player State
   const [isPlaying, setIsPlaying] = useState(false);
@@ -98,6 +117,9 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({ src, vttSrc, title }) 
       const hls = new Hls({
         enableWorker: true,
         lowLatencyMode: true,
+        xhrSetup: (xhr) => {
+          xhr.withCredentials = true;
+        },
       });
       hlsRef.current = hls;
 
@@ -312,6 +334,7 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({ src, vttSrc, title }) 
       ref={containerRef}
       onMouseMove={resetControlsTimeout}
       onMouseLeave={() => isPlaying && setShowControls(false)}
+      onContextMenu={(e) => e.preventDefault()}
       className="relative w-full aspect-video bg-black rounded-2xl overflow-hidden shadow-2xl group select-none flex items-center justify-center font-sans"
     >
       {/* HTML5 Video Element */}
@@ -321,6 +344,19 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({ src, vttSrc, title }) 
         className="w-full h-full object-contain cursor-pointer"
         playsInline
       />
+
+      {/* Floating Dynamic Anti-Piracy Student Watermark */}
+      {watermarkText && isPlaying && (
+        <div
+          className="absolute z-10 pointer-events-none transition-all duration-1000 ease-in-out opacity-25 hover:opacity-10 text-white font-mono text-[11px] md:text-xs px-2.5 py-1 rounded bg-black/40 border border-white/10 backdrop-blur-[1px] tracking-wider select-none"
+          style={{
+            top: `${watermarkPos.top}%`,
+            left: `${watermarkPos.left}%`,
+          }}
+        >
+          {watermarkText}
+        </div>
+      )}
 
       {/* Floating Center Play Button (When Paused) */}
       {!isPlaying && (

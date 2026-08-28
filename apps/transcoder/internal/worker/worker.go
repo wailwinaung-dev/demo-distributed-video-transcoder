@@ -2,6 +2,8 @@ package worker
 
 import (
 	"context"
+	"crypto/rand"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"log"
@@ -129,9 +131,43 @@ func (w *Worker) processJob(ctx context.Context, job JobPayload) error {
 
 	_ = w.db.UpdateVideoProgress(ctx, job.VideoID, 5)
 
-	// 5. Generate Multi-Bitrate HLS ladder (360p, 720p, 1080p + master.m3u8)
-	log.Printf("[Worker] 🎬 [Step 4/6] Transcoding HLS adaptive ladder (360p, 720p, 1080p)...")
-	err = w.ff.GenerateHLS(ctx, sourcePath, outDir, duration, func(pct int) {
+	// 5. Generate AES-128 Encryption Key & Key Info file
+	log.Printf("[Worker] 🔐 Generating 16-byte AES-128 encryption key and IV...")
+	aesKey := make([]byte, 16)
+	if _, err := rand.Read(aesKey); err != nil {
+		return fmt.Errorf("failed to generate random AES key: %w", err)
+	}
+	aesIv := make([]byte, 16)
+	if _, err := rand.Read(aesIv); err != nil {
+		return fmt.Errorf("failed to generate random IV: %w", err)
+	}
+
+	keyHex := hex.EncodeToString(aesKey)
+	ivHex := hex.EncodeToString(aesIv)
+
+	// Save key and IV to PostgreSQL
+	if err := w.db.SaveVideoEncryptionKey(ctx, job.VideoID, keyHex, ivHex); err != nil {
+		return fmt.Errorf("failed to save encryption key to database: %w", err)
+	}
+
+	// Write local enc.key for FFmpeg
+	encKeyPath := filepath.Join(workDir, "enc.key")
+	if err := os.WriteFile(encKeyPath, aesKey, 0600); err != nil {
+		return fmt.Errorf("failed to write enc.key file: %w", err)
+	}
+
+	// Write key_info.txt (Line 1: Key URL, Line 2: Local key path, Line 3: IV hex)
+	keyInfoPath := filepath.Join(workDir, "key_info.txt")
+	keyURI := fmt.Sprintf("http://localhost:4000/api/videos/keys/%s", job.VideoID)
+	keyInfoContent := fmt.Sprintf("%s\n%s\n%s\n", keyURI, encKeyPath, ivHex)
+	if err := os.WriteFile(keyInfoPath, []byte(keyInfoContent), 0600); err != nil {
+		return fmt.Errorf("failed to write key_info.txt: %w", err)
+	}
+	log.Printf("[Worker] 🔑 Encryption key generated and registered: %s", keyURI)
+
+	// 6. Generate Multi-Bitrate Encrypted HLS ladder (360p, 720p, 1080p + master.m3u8)
+	log.Printf("[Worker] 🎬 [Step 4/6] Transcoding HLS adaptive ladder (360p, 720p, 1080p) with AES-128 encryption...")
+	err = w.ff.GenerateHLS(ctx, sourcePath, outDir, keyInfoPath, duration, func(pct int) {
 		_ = w.db.UpdateVideoProgress(ctx, job.VideoID, pct)
 	})
 	if err != nil {

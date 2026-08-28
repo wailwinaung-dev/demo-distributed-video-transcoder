@@ -43,11 +43,12 @@ func (t *Transcoder) GetVideoDuration(ctx context.Context, sourcePath string) (f
 	return duration, nil
 }
 
-// GenerateHLS transcodes the source video into 360p, 720p, and 1080p HLS renditions with master.m3u8.
+// GenerateHLS transcodes the source video into 360p, 720p, and 1080p HLS renditions with master.m3u8 and optional AES-128 encryption.
 func (t *Transcoder) GenerateHLS(
 	ctx context.Context,
 	sourcePath string,
 	outputDir string,
+	keyInfoPath string,
 	totalDuration float64,
 	onProgress func(percent int),
 ) error {
@@ -56,6 +57,9 @@ func (t *Transcoder) GenerateHLS(
 	secs := int(totalDuration) % 60
 	log.Printf("[FFmpeg] 🎬 Starting Multi-Bitrate HLS Transcoding for %s (Duration: %02dm%02ds / %.2fs)", sourcePath, mins, secs, totalDuration)
 	log.Printf("[FFmpeg] 📐 Target Renditions: 360p (800k), 720p (2800k), 1080p (5000k)")
+	if keyInfoPath != "" {
+		log.Printf("[FFmpeg] 🔐 AES-128 Segment Encryption Enabled (Key Info: %s)", keyInfoPath)
+	}
 
 	if err := os.MkdirAll(outputDir, 0755); err != nil {
 		return fmt.Errorf("failed to create output dir: %w", err)
@@ -96,12 +100,19 @@ func (t *Transcoder) GenerateHLS(
 		"-hls_playlist_type", "vod",
 		"-hls_flags", "independent_segments",
 		"-hls_segment_type", "mpegts",
+	}
+
+	if keyInfoPath != "" {
+		args = append(args, "-hls_key_info_file", keyInfoPath)
+	}
+
+	args = append(args,
 		"-hls_segment_filename", filepath.Join(outputDir, "%v", "data%03d.ts"),
 		"-master_pl_name", "master.m3u8",
 		"-var_stream_map", "v:0,a:0,name:360p v:1,a:1,name:720p v:2,a:2,name:1080p",
 		filepath.Join(outputDir, "%v", "index.m3u8"),
 		"-progress", "pipe:1",
-	}
+	)
 
 	cmd := exec.CommandContext(ctx, "ffmpeg", args...)
 

@@ -21,6 +21,9 @@ model Video {
   rawS3Key     String
   hlsMasterKey String?
   vttKey       String?
+  aesKey       String?
+  aesIv        String?
+  isEncrypted  Boolean     @default(true)
   status       VideoStatus @default(PENDING)
   progress     Int         @default(0)
   errorMessage String?

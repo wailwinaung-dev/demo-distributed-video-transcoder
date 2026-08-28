@@ -35,6 +35,19 @@ export class VideoService {
     return this.formatVideoResponse(video);
   }
 
+  async getVideoEncryptionKey(id: string): Promise<Buffer> {
+    const video = await this.prisma.video.findUnique({
+      where: { id },
+      select: { aesKey: true, isEncrypted: true },
+    });
+
+    if (!video || !video.aesKey) {
+      throw new NotFoundException(`Encryption key for video "${id}" not found`);
+    }
+
+    return Buffer.from(video.aesKey, 'hex');
+  }
+
   private formatVideoResponse(video: any) {
     const hlsUrl = video.hlsMasterKey
       ? `${this.s3Endpoint}/${this.streamBucket}/${video.hlsMasterKey}`

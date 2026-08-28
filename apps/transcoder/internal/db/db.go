@@ -103,3 +103,19 @@ func (d *Database) SetVideoFailed(ctx context.Context, videoID string, errorMess
 	}
 	return nil
 }
+
+func (d *Database) SaveVideoEncryptionKey(ctx context.Context, videoID string, aesKeyHex string, aesIvHex string) error {
+	query := `
+		UPDATE "videos"
+		SET "aesKey" = $1,
+		    "aesIv" = $2,
+		    "isEncrypted" = true,
+		    "updatedAt" = NOW()
+		WHERE "id" = $3
+	`
+	_, err := d.pool.Exec(ctx, query, aesKeyHex, aesIvHex, videoID)
+	if err != nil {
+		return fmt.Errorf("failed to save video encryption key: %w", err)
+	}
+	return nil
+}
