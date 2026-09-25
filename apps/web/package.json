@@ -10,6 +10,8 @@
   },
   "dependencies": {
     "@lms/database": "workspace:*",
+    "@uppy/aws-s3": "^6.1.0",
+    "@uppy/core": "^6.0.1",
     "@vidstack/react": "^0.6.15",
     "axios": "^1.19.0",
     "hls.js": "^1.7.1",

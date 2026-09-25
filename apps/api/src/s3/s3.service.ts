@@ -5,6 +5,7 @@ import {
   CreateMultipartUploadCommand,
   UploadPartCommand,
   CompleteMultipartUploadCommand,
+  AbortMultipartUploadCommand,
 } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 
@@ -37,20 +38,6 @@ export class S3Service implements OnModuleInit {
     });
   }
 
-  async createMultipartUpload(key: string, contentType?: string): Promise<string> {
-    const command = new CreateMultipartUploadCommand({
-      Bucket: this.rawBucket,
-      Key: key,
-      ContentType: contentType || 'video/mp4',
-    });
-
-    const response = await this.s3Client.send(command);
-    if (!response.UploadId) {
-      throw new Error('Failed to obtain UploadId from S3');
-    }
-    return response.UploadId;
-  }
-
   async getPresignedPartUrl(key: string, uploadId: string, partNumber: number): Promise<string> {
     const command = new UploadPartCommand({
       Bucket: this.rawBucket,
@@ -62,20 +49,30 @@ export class S3Service implements OnModuleInit {
     return getSignedUrl(this.s3Client, command, { expiresIn: 300 });
   }
 
-  async completeMultipartUpload(
-    key: string,
-    uploadId: string,
-    parts: Array<{ PartNumber: number; ETag: string }>,
-  ): Promise<void> {
+  async getPresignedInitUrl(key: string, contentType?: string): Promise<string> {
+    const command = new CreateMultipartUploadCommand({
+      Bucket: this.rawBucket,
+      Key: key,
+      ContentType: contentType || 'video/mp4',
+    });
+    return getSignedUrl(this.s3Client, command, { expiresIn: 300 });
+  }
+
+  async getPresignedCompleteUrl(key: string, uploadId: string): Promise<string> {
     const command = new CompleteMultipartUploadCommand({
       Bucket: this.rawBucket,
       Key: key,
       UploadId: uploadId,
-      MultipartUpload: {
-        Parts: parts.sort((a, b) => a.PartNumber - b.PartNumber),
-      },
     });
+    return getSignedUrl(this.s3Client, command, { expiresIn: 300 });
+  }
 
-    await this.s3Client.send(command);
+  async getPresignedAbortUrl(key: string, uploadId: string): Promise<string> {
+    const command = new AbortMultipartUploadCommand({
+      Bucket: this.rawBucket,
+      Key: key,
+      UploadId: uploadId,
+    });
+    return getSignedUrl(this.s3Client, command, { expiresIn: 300 });
   }
 }
