@@ -56,6 +56,34 @@ services:
       exit 0;
       "
 
+  companion:
+    image: transloadit/companion:latest
+    container_name: lms-companion
+    restart: unless-stopped
+    ports:
+      - '3020:3020'
+    environment:
+      COMPANION_PORT: '3020'
+      COMPANION_DOMAIN: 'localhost:3020'
+      COMPANION_PROTOCOL: 'http'
+      COMPANION_SECRET: 'lms-companion-secret-development-key-1234'
+      COMPANION_DATADIR: '/tmp'
+      COMPANION_CLIENT_SOCKET_CONNECT_TIMEOUT: '60000'
+      COMPANION_CLIENT_ORIGINS: 'http://localhost:3000'
+      COMPANION_REDIS_URL: 'redis://redis:6379'
+      COMPANION_GOOGLE_KEY: ${COMPANION_GOOGLE_KEY:-}
+      COMPANION_GOOGLE_SECRET: ${COMPANION_GOOGLE_SECRET:-}
+      COMPANION_AWS_KEY: minioadmin
+      COMPANION_AWS_SECRET: minioadmin
+      COMPANION_AWS_BUCKET: lms-raw-uploads
+      COMPANION_AWS_ENDPOINT: http://minio:9000
+      COMPANION_AWS_REGION: us-east-1
+      COMPANION_AWS_FORCE_PATH_STYLE: 'true'
+      COMPANION_AWS_PREFIX: 'raw/'
+    depends_on:
+      - minio
+      - redis
+
 volumes:
   postgres_data:
   redis_data:

@@ -6,6 +6,7 @@ import type { LessonSlot } from '@/lib/upload-types';
 import { useUppyEngine } from '@/hooks/useUppyEngine';
 import { useLessonActions } from '@/hooks/useLessonActions';
 import LessonCard from './LessonCard';
+import GoogleDriveModal from './GoogleDriveModal';
 
 // ==========================================
 // COMPONENT
@@ -22,6 +23,7 @@ const INITIAL_SLOT: LessonSlot = {
 export const QueueVideoUploader: React.FC = () => {
   // State is lifted to the component — hooks consume via setSlots
   const [slots, setSlots] = useState<LessonSlot[]>([INITIAL_SLOT]);
+  const [driveModalSlotId, setDriveModalSlotId] = useState<string | null>(null);
 
   // Uppy engine: creates instance inside effect, exposes via ref
   const { uppyRef, isUploading } = useUppyEngine(setSlots);
@@ -33,9 +35,11 @@ export const QueueVideoUploader: React.FC = () => {
     removeSlot,
     updateTitle,
     selectFile,
+    selectDriveFile,
     startQueue,
     retrySlot
   } = useLessonActions(uppyRef, slots, setSlots);
+
 
   // ==========================================
   // METRICS & COMPUTED STATS
@@ -91,9 +95,21 @@ export const QueueVideoUploader: React.FC = () => {
               else fileInputRefs.current.delete(slot.id);
             }}
             onClickFileInput={() => fileInputRefs.current.get(slot.id)?.click()}
+            onClickGoogleDrive={() => setDriveModalSlotId(slot.id)}
           />
         ))}
       </div>
+
+      {/* Google Drive Picker Modal */}
+      <GoogleDriveModal
+        isOpen={driveModalSlotId !== null}
+        onClose={() => setDriveModalSlotId(null)}
+        slotId={driveModalSlotId}
+        slotTitle={slots.find((s) => s.id === driveModalSlotId)?.title || ''}
+        uppyRef={uppyRef}
+        onSelectDriveFile={selectDriveFile}
+      />
+
 
       {/* 3. Bottom Actions Bar */}
       <div className="flex flex-col sm:flex-row items-center justify-between gap-4 p-5 rounded-2xl bg-zinc-900/60 border border-white/5 backdrop-blur-md">

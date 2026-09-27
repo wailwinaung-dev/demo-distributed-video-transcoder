@@ -2,11 +2,18 @@
 // Shared Types & Helpers for Upload System
 // ==========================================
 
+export interface SlotFileInfo {
+  name: string;
+  size?: number;
+  type?: string;
+}
+
 export interface LessonSlot {
   id: string;
   uppyFileId?: string;
   title: string;
-  file: File | null;
+  file: File | SlotFileInfo | null;
+  source?: 'local' | 'google-drive';
   status: 'empty' | 'waiting' | 'uploading' | 'completed' | 'error';
   progress: number;
   stage?: 'initiating' | 'uploading' | 'completing' | 'done';
@@ -17,6 +24,7 @@ export interface LessonSlot {
   videoId?: string;
   errorMessage?: string;
 }
+
 
 /** Format bytes into human-readable strings (KB, MB, GB) */
 export function formatBytes(bytes: number = 0): string {

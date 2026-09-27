@@ -24,3 +24,80 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+/* ============================================================
+ * Uppy Provider Views (Google Drive) Styling & Layout Fix
+ * ============================================================ */
+.uppy-drive-container,
+.uppy-drive-container .uppy-Root {
+  display: flex !important;
+  flex-direction: column !important;
+  flex: 1 1 auto !important;
+  height: 100% !important;
+  min-height: 440px !important;
+  width: 100% !important;
+}
+
+.uppy-drive-container .uppy-ProviderBrowser {
+  display: flex !important;
+  flex-direction: column !important;
+  flex: 1 1 auto !important;
+  height: 100% !important;
+  min-height: 440px !important;
+  width: 100% !important;
+}
+
+.uppy-drive-container .uppy-ProviderBrowser-body {
+  position: relative !important;
+  display: flex !important;
+  flex-direction: column !important;
+  flex: 1 1 auto !important;
+  min-height: 340px !important;
+  height: 360px !important;
+  width: 100% !important;
+  overflow: hidden !important;
+}
+
+.uppy-drive-container .uppy-ProviderBrowser-list {
+  position: absolute !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
+  height: 100% !important;
+  width: 100% !important;
+  overflow-y: auto !important;
+  background-color: transparent !important;
+}
+
+/* Dark mode styling refinements for Google Drive browser */
+.uppy-drive-container .uppy-ProviderBrowser-header {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
+  padding: 8px 12px !important;
+}
+
+.uppy-drive-container .uppy-ProviderBrowser-searchFilter {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
+  padding: 8px 12px !important;
+}
+
+.uppy-drive-container .uppy-ProviderBrowser-searchInput {
+  background: rgba(255, 255, 255, 0.05) !important;
+  color: #fff !important;
+  border: 1px solid rgba(255, 255, 255, 0.15) !important;
+  border-radius: 8px !important;
+}
+
+.uppy-drive-container .uppy-ProviderBrowserItem {
+  color: #fff !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04) !important;
+}
+
+.uppy-drive-container .uppy-ProviderBrowserItem:hover {
+  background-color: rgba(255, 255, 255, 0.05) !important;
+}
+
+.uppy-drive-container .uppy-ProviderBrowserItem-title {
+  color: #fff !important;
+}
+

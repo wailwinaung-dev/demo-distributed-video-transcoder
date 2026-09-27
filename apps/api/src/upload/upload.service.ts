@@ -102,12 +102,32 @@ export class UploadService {
       throw new BadRequestException('key is required');
     }
 
-    const video = await this.prisma.video.findFirst({
+    let video = await this.prisma.video.findFirst({
       where: dto.videoId ? { id: dto.videoId } : { rawS3Key: dto.key },
     });
 
     if (!video) {
-      throw new NotFoundException(`Video for key "${dto.key}" not found`);
+      if (!dto.key.startsWith('raw/')) {
+        throw new BadRequestException('Invalid key prefix: must start with raw/');
+      }
+
+      // For remote provider uploads (e.g. Google Drive streamed via Companion),
+      // the file was streamed directly to MinIO. Auto-create pending video record.
+      const rawFileName = dto.key.split('/').pop() || 'video.mp4';
+      const fallbackTitle = rawFileName
+        .replace(/\.[^/.]+$/, '')
+        .replace(/[-_]/g, ' ')
+        .trim();
+
+      video = await this.prisma.video.create({
+        data: {
+          id: dto.videoId || randomUUID(),
+          title: dto.title || fallbackTitle,
+          rawS3Key: dto.key,
+          status: VideoStatus.PENDING,
+          progress: 0,
+        },
+      });
     }
 
     // Idempotency: If already uploaded or processing, do not enqueue duplicate Redis job

@@ -135,6 +135,7 @@ export function useLessonActions(
                 ...s,
                 file,
                 uppyFileId,
+                source: 'local',
                 title: suggestedTitle,
                 status: 'waiting' as const,
                 progress: 0,
@@ -146,6 +147,60 @@ export function useLessonActions(
     },
     [uppyRef, setSlots]
   );
+
+  // ──────────────────────────────────────────
+  // D2. Assign a Google Drive remote file to a slot
+  // ──────────────────────────────────────────
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const selectDriveFile = useCallback(
+    (slotId: string, uppyFile: any) => {
+      const uppy = uppyRef.current;
+      if (!uppy || !uppyFile) return;
+
+      const currentSlot = slotsRef.current.find((s) => s.id === slotId);
+
+      // Remove previous file from Uppy if one was already attached
+      if (currentSlot?.uppyFileId && currentSlot.uppyFileId !== uppyFile.id) {
+        try {
+          uppy.removeFile(currentSlot.uppyFileId);
+        } catch {
+          /* ignore */
+        }
+      }
+
+      const suggestedTitle =
+        currentSlot?.title?.trim() || cleanTitleFromFilename(uppyFile.name);
+
+      // Sync metadata with Uppy file
+      uppy.setFileMeta(uppyFile.id, {
+        slotId,
+        title: suggestedTitle,
+      });
+
+      setSlots((prev) =>
+        prev.map((s) =>
+          s.id === slotId
+            ? {
+                ...s,
+                file: {
+                  name: uppyFile.name,
+                  size: uppyFile.size || 0,
+                  type: uppyFile.type,
+                },
+                uppyFileId: uppyFile.id,
+                source: 'google-drive',
+                title: suggestedTitle,
+                status: 'waiting' as const,
+                progress: 0,
+                errorMessage: undefined,
+              }
+            : s
+        )
+      );
+    },
+    [uppyRef, setSlots]
+  );
+
 
   // ──────────────────────────────────────────
   // E. Trigger the upload queue
@@ -194,17 +249,19 @@ export function useLessonActions(
       let targetUppyId = slot.uppyFileId;
 
       if (!targetUppyId || !uppy.getFile(targetUppyId)) {
-        // Re-register the file if it was removed from Uppy
-        try {
-          targetUppyId = uppy.addFile({
-            id: `${slotId}/${slot.file.name}`,
-            name: slot.file.name,
-            type: slot.file.type,
-            data: slot.file,
-            meta: { title: slot.title, slotId }
-          });
-        } catch {
-          /* ignore */
+        if (slot.file instanceof File) {
+          // Re-register local file if it was removed from Uppy
+          try {
+            targetUppyId = uppy.addFile({
+              id: `${slotId}/${slot.file.name}`,
+              name: slot.file.name,
+              type: slot.file.type,
+              data: slot.file,
+              meta: { title: slot.title, slotId }
+            });
+          } catch {
+            /* ignore */
+          }
         }
       } else {
         // Retry the existing file
@@ -243,6 +300,7 @@ export function useLessonActions(
     removeSlot,
     updateTitle,
     selectFile,
+    selectDriveFile,
     startQueue,
     retrySlot
   };

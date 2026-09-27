@@ -85,13 +85,18 @@ export function useUppyEngine(setSlots: SetSlots) {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const onUploadSuccess = async (file: any, response: any) => {
       const slotId = file?.meta?.slotId as string;
-      const s3Key = (response?.body?.key || file?.meta?.s3Key) as string;
+
+      // Extract S3 key from response body (Key or key), multipart state, or uploadURL
+      let s3Key = response?.body?.Key || response?.body?.key;
+
+      const title = (file?.meta?.title as string) || file?.name || '';
 
       if (slotId) updateSlot(slotId, { stage: 'completing' });
 
       try {
         const res = await api.post('/upload/notify-complete', {
           key: s3Key,
+          title
         });
 
         if (slotId) {

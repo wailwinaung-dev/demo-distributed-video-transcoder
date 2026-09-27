@@ -10,6 +10,7 @@ import {
   AlertCircle,
   ArrowRight,
   Trash2,
+  Cloud,
 } from 'lucide-react';
 import type { LessonSlot } from '@/lib/upload-types';
 import { formatBytes } from '@/lib/upload-types';
@@ -24,6 +25,7 @@ interface LessonCardProps {
   onRetry: (slotId: string) => void;
   setFileInputRef: (el: HTMLInputElement | null) => void;
   onClickFileInput: () => void;
+  onClickGoogleDrive: () => void;
 }
 
 export default function LessonCard({
@@ -36,6 +38,7 @@ export default function LessonCard({
   onRetry,
   setFileInputRef,
   onClickFileInput,
+  onClickGoogleDrive,
 }: LessonCardProps) {
   const isUploading = slot.status === 'uploading';
   const isCompleted = slot.status === 'completed';
@@ -146,40 +149,80 @@ export default function LessonCard({
             /* Attached Single File Card */
             <div className="p-2.5 rounded-xl bg-zinc-950/60 border border-white/10 flex items-center justify-between gap-2">
               <div className="flex items-center gap-2.5 min-w-0">
-                <div className="w-8 h-8 rounded-lg bg-indigo-500/10 text-indigo-400 flex items-center justify-center shrink-0">
-                  <FileVideo className="w-4 h-4" />
+                <div
+                  className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${
+                    slot.source === 'google-drive'
+                      ? 'bg-emerald-500/10 text-emerald-400'
+                      : 'bg-indigo-500/10 text-indigo-400'
+                  }`}
+                >
+                  {slot.source === 'google-drive' ? (
+                    <Cloud className="w-4 h-4" />
+                  ) : (
+                    <FileVideo className="w-4 h-4" />
+                  )}
                 </div>
                 <div className="min-w-0">
-                  <p className="text-xs font-medium text-white truncate">
-                    {slot.file.name}
-                  </p>
+                  <div className="flex items-center gap-1.5">
+                    <p className="text-xs font-medium text-white truncate">
+                      {slot.file.name}
+                    </p>
+                    {slot.source === 'google-drive' && (
+                      <span className="text-[9px] uppercase tracking-wider font-semibold px-1.5 py-0.5 rounded bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 shrink-0">
+                        Drive
+                      </span>
+                    )}
+                  </div>
                   <p className="text-[10px] text-zinc-500 font-mono">
-                    {formatBytes(slot.file.size)}
+                    {formatBytes(slot.file.size || 0)}
                   </p>
                 </div>
               </div>
 
               {!isUploading && !isCompleted && !isUploadingQueue && (
-                <button
-                  type="button"
-                  onClick={onClickFileInput}
-                  className="shrink-0 text-xs text-indigo-400 hover:text-indigo-300 font-medium px-2 py-1 rounded hover:bg-white/5 transition"
-                >
-                  Change
-                </button>
+                <div className="flex items-center gap-1 shrink-0">
+                  <button
+                    type="button"
+                    onClick={onClickFileInput}
+                    className="text-[11px] text-indigo-400 hover:text-indigo-300 font-medium px-2 py-1 rounded hover:bg-white/5 transition"
+                    title="Change to another local file"
+                  >
+                    Local
+                  </button>
+                  <span className="text-zinc-600 text-xs">|</span>
+                  <button
+                    type="button"
+                    onClick={onClickGoogleDrive}
+                    className="text-[11px] text-emerald-400 hover:text-emerald-300 font-medium px-2 py-1 rounded hover:bg-white/5 transition"
+                    title="Change to Google Drive file"
+                  >
+                    Drive
+                  </button>
+                </div>
               )}
             </div>
           ) : (
-            /* Empty File Picker Button */
-            <button
-              type="button"
-              disabled={isUploadingQueue}
-              onClick={onClickFileInput}
-              className="w-full h-[46px] flex items-center justify-center gap-2 rounded-xl border border-dashed border-zinc-700 bg-zinc-950/30 hover:bg-zinc-950/60 hover:border-indigo-500 text-xs text-zinc-400 hover:text-white disabled:opacity-50 disabled:cursor-not-allowed transition group"
-            >
-              <UploadCloud className="w-4 h-4 text-zinc-500 group-hover:text-indigo-400 transition" />
-              <span>Select Video File</span>
-            </button>
+            /* Empty File Picker - Choose Local or Google Drive */
+            <div className="grid grid-cols-2 gap-2">
+              <button
+                type="button"
+                disabled={isUploadingQueue}
+                onClick={onClickFileInput}
+                className="h-[46px] flex items-center justify-center gap-2 rounded-xl border border-dashed border-zinc-700 bg-zinc-950/30 hover:bg-zinc-950/60 hover:border-indigo-500 text-xs text-zinc-400 hover:text-white disabled:opacity-50 disabled:cursor-not-allowed transition group"
+              >
+                <UploadCloud className="w-4 h-4 text-zinc-500 group-hover:text-indigo-400 transition" />
+                <span>Local File</span>
+              </button>
+              <button
+                type="button"
+                disabled={isUploadingQueue}
+                onClick={onClickGoogleDrive}
+                className="h-[46px] flex items-center justify-center gap-2 rounded-xl border border-dashed border-zinc-700 bg-zinc-950/30 hover:bg-zinc-950/60 hover:border-emerald-500 text-xs text-zinc-400 hover:text-white disabled:opacity-50 disabled:cursor-not-allowed transition group"
+              >
+                <Cloud className="w-4 h-4 text-zinc-500 group-hover:text-emerald-400 transition" />
+                <span>Google Drive</span>
+              </button>
+            </div>
           )}
         </div>
       </div>
@@ -194,7 +237,9 @@ export default function LessonCard({
               )}
               {slot.stage === 'initiating' && 'Initializing S3 Multipart...'}
               {slot.stage === 'uploading' &&
-                `Streaming 10MB chunk ${slot.currentPart || 1} of ${slot.totalParts || 1} directly to MinIO...`}
+                (slot.source === 'google-drive'
+                  ? 'Streaming server-to-server from Google Drive to MinIO...'
+                  : `Streaming 10MB chunk ${slot.currentPart || 1} of ${slot.totalParts || 1} directly to MinIO...`)}
               {slot.stage === 'completing' && 'Stitching chunks & enqueuing to Redis...'}
               {slot.stage === 'done' && 'Upload completed! Processing in Go Transcoder...'}
             </span>
@@ -214,7 +259,11 @@ export default function LessonCard({
             <span>
               {formatBytes(slot.uploadedBytes || 0)} / {formatBytes(slot.file?.size || 0)}
             </span>
-            <span>Direct S3 Upload (10MB Chunks)</span>
+            <span>
+              {slot.source === 'google-drive'
+                ? 'Server-to-Server Stream (Drive ➔ S3)'
+                : 'Direct S3 Upload (10MB Chunks)'}
+            </span>
           </div>
         </div>
       )}

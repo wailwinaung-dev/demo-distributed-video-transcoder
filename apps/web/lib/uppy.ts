@@ -1,5 +1,6 @@
 import Uppy from '@uppy/core';
 import AwsS3 from '@uppy/aws-s3';
+import GoogleDrive from '@uppy/google-drive';
 import { api } from './api';
 
 const CHUNK_SIZE = 10 * 1024 * 1024; // 10MB per chunk
@@ -10,20 +11,32 @@ export type SlotUpdater = (
 ) => void;
 
 /**
- * Creates a configured Uppy instance with @uppy/aws-s3 (signRequest mode).
+ * Creates a configured Uppy instance with @uppy/aws-s3 and @uppy/google-drive.
  *
- * All S3 operations go through the NestJS `POST /upload/s3-sign` endpoint.
- * No Companion server needed.
+ * Local files go directly to MinIO S3 via @uppy/aws-s3 signRequest mode.
+ * Remote files (Google Drive) are streamed server-to-server via Uppy Companion.
  *
- * @param onSlotUpdate - Optional callback to update lesson slot state (e.g. setting status to 'uploading' on init)
+ * @param onSlotUpdate - Optional callback to update lesson slot state
  */
 export function createUppy(onSlotUpdate?: SlotUpdater) {
+  const companionUrl =
+    process.env.NEXT_PUBLIC_COMPANION_URL || 'http://localhost:3020';
+
   const uppy = new Uppy({
     id: 'lms-lesson-queue-uploader',
     autoProceed: false,
     restrictions: {
       allowedFileTypes: ['video/*']
     }
+  });
+
+  uppy.use(GoogleDrive, {
+    companionUrl,
+    companionAllowedHosts: [
+      companionUrl,
+      'http://localhost:3020',
+      'localhost:3020'
+    ]
   });
 
   uppy.use(AwsS3, {
@@ -36,11 +49,9 @@ export function createUppy(onSlotUpdate?: SlotUpdater) {
       // Resolve the Uppy file associated with this request
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       let uppyFile: any = undefined;
-      try {
-        uppyFile = uppy.getFile(req.key);
-      } catch {
-        /* file may not exist by key */
-      }
+
+      uppyFile = uppy.getFile(req.key);
+      // If not found by key, try to find by name or meta.s3Key
       if (!uppyFile) {
         uppyFile = uppy.getFiles().find(
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -62,7 +73,7 @@ export function createUppy(onSlotUpdate?: SlotUpdater) {
           status: 'uploading',
           stage: 'initiating',
           progress: 0,
-          errorMessage: undefined,
+          errorMessage: undefined
         });
       }
 
@@ -73,14 +84,14 @@ export function createUppy(onSlotUpdate?: SlotUpdater) {
         partNumber: req.partNumber,
         title,
         contentType,
-        meta: uppyFile?.meta,
+        meta: uppyFile?.meta
       });
 
       return {
         url: res.data.url,
-        key: res.data.key || req.key,
+        key: res.data.key || req.key
       };
-    },
+    }
   });
 
   return uppy;
